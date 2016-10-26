@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MQExplorer>
 <category IMemento.internal.id="com.ibm.mq.explorer.ui.category.conn.info">
-</subcategory>
+<subcategory/>
 <subcategory IMemento.internal.id="com.ibm.mq.explorer.ui.subcategory.handles">
 <QueueManagerHandles>
 <QueueManagerHandle autoReconnect="0" channel="CHLAUTH.ADDRMAP" commandLevel="800" connName="localhost(1416)" connnectionType="2" expiryInterval="300" name="ASH" password="" platform="3" refreshInterval="300" securityExitData="" securityExitLocation="" securityExitName="" sslCipherSuite="" sslFipsRequired="0" sslPeerName="" sslPersonalStore="" sslPersonalStorePw="" sslResetCount="0" sslTrustedStore="" sslTrustedStorePw="" uniqueId="ASH/localhost/1416/CHLAUTH.ADDRMAP" userIdState="0" userid="" useridCompatibilityMode="0" uuid="ASH_2016-10-08_21.48.28" visible="1" waitInterval="30"/>
@@ -12,4 +12,5 @@
 <QueueManagerHandle autoReconnect="0" channel="COMPAT.PEERMAP" commandLevel="800" connName="localhost(1416)" connnectionType="2" expiryInterval="300" name="ASH" password="" platform="3" refreshInterval="300" securityExitData="" securityExitLocation="" securityExitName="" sslCipherSuite="SSL_RSA_WITH_3DES_EDE_CBC_SHA" sslFipsRequired="0" sslPeerName="" sslPersonalStore="" sslPersonalStorePw="" sslResetCount="0" sslTrustedStore="" sslTrustedStorePw="" uniqueId="ASH/localhost/1416/COMPAT.PEERMAP" userIdState="0" userid="" useridCompatibilityMode="1" uuid="ASH_2016-10-08_21.48.28" visible="1" waitInterval="30"/>
 </QueueManagerHandles>
 </subcategory>
+</category>
 </MQExplorer>
