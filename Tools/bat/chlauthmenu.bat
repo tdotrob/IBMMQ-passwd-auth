@@ -44,7 +44,7 @@ cmd /d /c "%~f0" %1 :historySafe
 exit /b
 
 :historySafe
-echo testuser=%testuser%
+echo testuser=%testuser%, USERNAME=%USERNAME%
 
 :: Main program begins
 SETLOCAL ENABLEEXTENSIONS
@@ -85,7 +85,7 @@ echo      !C!3) USERSRC(NOACCESS) - Password User
 echo      !D!4) USERSRC(NOACCESS) - Process ID User
 echo       Sets USERSRC(CHL) globally then overrides USERMAP
 echo.
-echo      !E!5) MCAUSER('nobody')
+echo      !E!5) MCAUSER('*NOBODY')
 echo      !F!6) MCAUSER(' ')
 echo.
 echo      !G!7) ADOPTCTX(YES)
