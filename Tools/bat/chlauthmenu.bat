@@ -17,6 +17,12 @@
 ::                      Moved listener definition to the initialization subroutine
 ::                      Added comments for each subroutine
 ::                      
+:: 20161029 fjbsaper    Changed to only show AMQ results and suppress O.K. returns
+::			Added pause before menu so as to show the results before wiping them out
+::                      Fixed a bug usersrc(noaccess) does not allow chckclnt
+::                      Reverted the check for elevated privilege rule to 
+::                      check if you can run dspmqtrn (diff btwn windows home and windows pro)
+::                      changing to a positive check AMQ7077 not authorized
 :: ============================================================================
 
 
@@ -33,7 +39,7 @@ set testuser=%1
 if "a%testuser%a" == "aa" (
 	goto usage
 )
-if "a%testuser%a" == "aa%USERNAME%a" (
+if "a%testuser%a" == "a%USERNAME%a" (
 	goto usage
 )
 
@@ -54,14 +60,13 @@ SETLOCAL
 
 :: Test to see if user has elevated WMQ admin privileges
 :: we are running strmqm which does require elevated privileges in windows
-:: set Response=
-:: for /f "tokens=*" %%a in ('dspmqtrn 2^>^&1') do @set Response=%%a
-:: set isAdmin=!Response:~0,7!
-:: if NOT "%isAdmin%"=="AMQ7028" (
-
-net session > nul 2>&1
-set /a isAdmin=%errorlevel%
-if %isAdmin% gtr 0 (
+::net session > nul 2>&1
+::set /a isAdmin=%errorlevel%
+::if %isAdmin% gtr 0 (
+set Response=
+for /f "tokens=*" %%a in ('dspmqtrn 2^>^&1') do @set Response=%%a
+set isAdmin=!Response:~0,7!
+if  "%isAdmin%"=="AMQ7077" (
 	echo. 
 	echo %0: This script must be run from an account with elevated adminstrator privileges ^(run as administrator^).
 	exit /B 2
@@ -74,6 +79,7 @@ strmqm -z ASH & timeout /T !TIMR! 1>NUL 2>&1
 2>NUL CALL :CASE_R
 
 :MENU
+pause
 cls
 echo.
 echo    CHLAUTH Testing Menu
@@ -110,15 +116,15 @@ GOTO MENU
 
 :: Set up USERSRC(CHANNEL)
 :CASE_1
-	echo SET CHLAUTH^('CHLAUTH.ADDRMAP'^) TYPE^(ADDRESSMAP^) ADDRESS^('127.0.0.1'^)   USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)                   ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('CHLAUTH.PEERMAP'^) TYPE^(SSLPEERMAP^) SSLPEER^('CN=mqm'^)      USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)                   ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('CHLAUTH.USERMAP'^) TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^) USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)                   ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('CHLAUTH.USERMAP'^) TYPE^(USERMAP^)    CLNTUSER^('%USERNAME%'^) USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)                   ACTION^(REPLACE^) | runmqsc ASH
+	echo SET CHLAUTH^('CHLAUTH.ADDRMAP'^) TYPE^(ADDRESSMAP^) ADDRESS^('127.0.0.1'^)   USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)                   ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('CHLAUTH.PEERMAP'^) TYPE^(SSLPEERMAP^) SSLPEER^('CN=mqm'^)      USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)                   ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('CHLAUTH.USERMAP'^) TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^) USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)                   ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('CHLAUTH.USERMAP'^) TYPE^(USERMAP^)    CLNTUSER^('%USERNAME%'^) USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)                   ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
 
-	echo SET CHLAUTH^('COMPAT.ADDRMAP'^)  TYPE^(ADDRESSMAP^) ADDRESS^('127.0.0.1'^)   USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)                   ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('COMPAT.PEERMAP'^)  TYPE^(SSLPEERMAP^) SSLPEER^('CN=mqm'^)      USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)                   ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('COMPAT.USERMAP'^)  TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^) USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)                   ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('COMPAT.USERMAP'^)  TYPE^(USERMAP^)    CLNTUSER^('%USERNAME%'^) USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)                   ACTION^(REPLACE^) | runmqsc ASH
+	echo SET CHLAUTH^('COMPAT.ADDRMAP'^)  TYPE^(ADDRESSMAP^) ADDRESS^('127.0.0.1'^)   USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)                   ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('COMPAT.PEERMAP'^)  TYPE^(SSLPEERMAP^) SSLPEER^('CN=mqm'^)      USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)                   ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('COMPAT.USERMAP'^)  TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^) USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)                   ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('COMPAT.USERMAP'^)  TYPE^(USERMAP^)    CLNTUSER^('%USERNAME%'^) USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)                   ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
 	SET "A=*" & SET "B= " & SET "C= " & SET "D= "
 	timeout /T !TIMR! >nul
 	GOTO END_CASE
@@ -126,34 +132,34 @@ GOTO MENU
 :: Set up USERSRC(MAP)
 :: To validate that the connections work, the IDs addrmap1, peermap1, usermap1, and usermap2 must be authorized to connect and inquire, preferably as members of the local mqm group.
 :CASE_2
-	echo SET CHLAUTH^('CHLAUTH.ADDRMAP'^) TYPE^(ADDRESSMAP^) ADDRESS^('127.0.0.1'^)   MCAUSER^('addrmap1'^) USERSRC^(MAP^)      CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('CHLAUTH.PEERMAP'^) TYPE^(SSLPEERMAP^) SSLPEER^('CN=mqm'^)      MCAUSER^('peermap1'^) USERSRC^(MAP^)      CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('CHLAUTH.USERMAP'^) TYPE^(USERMAP^)    CLNTUSER^('%USERNAME%'^) MCAUSER^('usermap1'^) USERSRC^(MAP^)      CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('CHLAUTH.USERMAP'^) TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^) MCAUSER^('usermap2'^) USERSRC^(MAP^)      CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
+	echo SET CHLAUTH^('CHLAUTH.ADDRMAP'^) TYPE^(ADDRESSMAP^) ADDRESS^('127.0.0.1'^)   MCAUSER^('addrmap1'^) USERSRC^(MAP^)      CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('CHLAUTH.PEERMAP'^) TYPE^(SSLPEERMAP^) SSLPEER^('CN=mqm'^)      MCAUSER^('peermap1'^) USERSRC^(MAP^)      CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('CHLAUTH.USERMAP'^) TYPE^(USERMAP^)    CLNTUSER^('%USERNAME%'^) MCAUSER^('usermap1'^) USERSRC^(MAP^)      CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('CHLAUTH.USERMAP'^) TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^) MCAUSER^('usermap2'^) USERSRC^(MAP^)      CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
 
-	echo SET CHLAUTH^('COMPAT.ADDRMAP'^)  TYPE^(ADDRESSMAP^) ADDRESS^('127.0.0.1'^)   MCAUSER^('addrmap1'^) USERSRC^(MAP^)      CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('COMPAT.PEERMAP'^)  TYPE^(SSLPEERMAP^) SSLPEER^('CN=mqm'^)      MCAUSER^('peermap1'^) USERSRC^(MAP^)      CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('COMPAT.USERMAP'^)  TYPE^(USERMAP^)    CLNTUSER^('%USERNAME%'^) MCAUSER^('usermap1'^) USERSRC^(MAP^)      CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('COMPAT.USERMAP'^)  TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^) MCAUSER^('usermap2'^) USERSRC^(MAP^)      CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
+	echo SET CHLAUTH^('COMPAT.ADDRMAP'^)  TYPE^(ADDRESSMAP^) ADDRESS^('127.0.0.1'^)   MCAUSER^('addrmap1'^) USERSRC^(MAP^)      CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('COMPAT.PEERMAP'^)  TYPE^(SSLPEERMAP^) SSLPEER^('CN=mqm'^)      MCAUSER^('peermap1'^) USERSRC^(MAP^)      CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('COMPAT.USERMAP'^)  TYPE^(USERMAP^)    CLNTUSER^('%USERNAME%'^) MCAUSER^('usermap1'^) USERSRC^(MAP^)      CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('COMPAT.USERMAP'^)  TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^) MCAUSER^('usermap2'^) USERSRC^(MAP^)      CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
 	SET "A= " & SET "B=*" & SET "C= " & SET "D= "
 	timeout /T !TIMR! >nul
 	GOTO END_CASE
 
 :: Set up USERSRC(NOACCESS) on the ID associated with the password 
 :CASE_3
-	echo SET CHLAUTH^('CHLAUTH.ADDRMAP'^) TYPE^(ADDRESSMAP^) ADDRESS^('127.0.0.1'^)                         USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('CHLAUTH.PEERMAP'^) TYPE^(SSLPEERMAP^) SSLPEER^('CN=mqm'^)                            USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('CHLAUTH.USERMAP'^) TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^)                       USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
+	echo SET CHLAUTH^('CHLAUTH.ADDRMAP'^) TYPE^(ADDRESSMAP^) ADDRESS^('127.0.0.1'^) 	USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('CHLAUTH.PEERMAP'^) TYPE^(SSLPEERMAP^) SSLPEER^('CN=mqm'^)            USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('CHLAUTH.USERMAP'^) TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^)       USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
 
-	echo SET CHLAUTH^('COMPAT.ADDRMAP'^)  TYPE^(ADDRESSMAP^) ADDRESS^('127.0.0.1'^)                         USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('COMPAT.PEERMAP'^)  TYPE^(SSLPEERMAP^) SSLPEER^('CN=mqm'^)                            USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('COMPAT.USERMAP'^)  TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^)                       USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
+	echo SET CHLAUTH^('COMPAT.ADDRMAP'^)  TYPE^(ADDRESSMAP^) ADDRESS^('127.0.0.1'^)         USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('COMPAT.PEERMAP'^)  TYPE^(SSLPEERMAP^) SSLPEER^('CN=mqm'^)            USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('COMPAT.USERMAP'^)  TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^)       USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
 
-	echo SET CHLAUTH^('CHLAUTH.USERMAP'^) TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^)                       USERSRC^(NOACCESS^) CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('COMPAT.USERMAP'^)  TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^)                       USERSRC^(NOACCESS^) CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
+	echo SET CHLAUTH^('CHLAUTH.USERMAP'^) TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^)       USERSRC^(NOACCESS^) 			 ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('COMPAT.USERMAP'^)  TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^)       USERSRC^(NOACCESS^) 			 ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
 
-	echo SET CHLAUTH^('CHLAUTH.USERMAP'^) TYPE^(USERMAP^)    CLNTUSER^('%USERNAME%'^)                       USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)  ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('COMPAT.USERMAP'^)  TYPE^(USERMAP^)    CLNTUSER^('%USERNAME%'^)                       USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)  ACTION^(REPLACE^) | runmqsc ASH
+	echo SET CHLAUTH^('CHLAUTH.USERMAP'^) TYPE^(USERMAP^)    CLNTUSER^('%USERNAME%'^)       USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)  ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('COMPAT.USERMAP'^)  TYPE^(USERMAP^)    CLNTUSER^('%USERNAME%'^)       USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)  ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
 
         SET "A=*" & SET "B= " & SET "C=*" & SET "D= "
 	timeout /T !TIMR! >nul
@@ -161,57 +167,57 @@ GOTO MENU
 
 :: Set up USERSRC(NOACCESS) on the ID associated with the running process 
 :CASE_4
-	echo SET CHLAUTH^('CHLAUTH.ADDRMAP'^) TYPE^(ADDRESSMAP^) ADDRESS^('127.0.0.1'^)                         USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('CHLAUTH.PEERMAP'^) TYPE^(SSLPEERMAP^) SSLPEER^('CN=mqm'^)                            USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
+	echo SET CHLAUTH^('CHLAUTH.ADDRMAP'^) TYPE^(ADDRESSMAP^) ADDRESS^('127.0.0.1'^)         USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('CHLAUTH.PEERMAP'^) TYPE^(SSLPEERMAP^) SSLPEER^('CN=mqm'^)            USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
 
-	echo SET CHLAUTH^('COMPAT.ADDRMAP'^)  TYPE^(ADDRESSMAP^) ADDRESS^('127.0.0.1'^)                         USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('COMPAT.PEERMAP'^)  TYPE^(SSLPEERMAP^) SSLPEER^('CN=mqm'^)                            USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
+	echo SET CHLAUTH^('COMPAT.ADDRMAP'^)  TYPE^(ADDRESSMAP^) ADDRESS^('127.0.0.1'^)         USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('COMPAT.PEERMAP'^)  TYPE^(SSLPEERMAP^) SSLPEER^('CN=mqm'^)            USERSRC^(CHANNEL^)  CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
 
-	echo SET CHLAUTH^('CHLAUTH.USERMAP'^) TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^)                       USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)  ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('COMPAT.USERMAP'^)  TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^)                       USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)  ACTION^(REPLACE^) | runmqsc ASH
+	echo SET CHLAUTH^('CHLAUTH.USERMAP'^) TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^)       USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)  ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('COMPAT.USERMAP'^)  TYPE^(USERMAP^)    CLNTUSER^('%testuser%'^)       USERSRC^(CHANNEL^) CHCKCLNT^(REQUIRED^)  ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
 
-	echo SET CHLAUTH^('CHLAUTH.USERMAP'^) TYPE^(USERMAP^)    CLNTUSER^('%USERNAME%'^)                       USERSRC^(NOACCESS^) CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
-	echo SET CHLAUTH^('COMPAT.USERMAP'^)  TYPE^(USERMAP^)    CLNTUSER^('%USERNAME%'^)                       USERSRC^(NOACCESS^) CHCKCLNT^(REQUIRED^) ACTION^(REPLACE^) | runmqsc ASH
+	echo SET CHLAUTH^('CHLAUTH.USERMAP'^) TYPE^(USERMAP^)    CLNTUSER^('%USERNAME%'^)       USERSRC^(NOACCESS^) 			 ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH^('COMPAT.USERMAP'^)  TYPE^(USERMAP^)    CLNTUSER^('%USERNAME%'^)       USERSRC^(NOACCESS^) 			 ACTION^(REPLACE^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
 	SET "A=*" & SET "B= " & SET "C= " & SET "D=*"
 	timeout /T !TIMR! >nul
 	GOTO END_CASE
 
 :: Set MCAUSER of the channels with a blocking value 
 :CASE_5
-	echo DEFINE CHANNEL^('CHLAUTH.ADDRMAP'^) CHLTYPE^(SVRCONN^) MCAUSER^('^*NOBODY'^)                                            TRPTYPE^(TCP^) REPLACE | runmqsc ASH
-	echo DEFINE CHANNEL^('CHLAUTH.PEERMAP'^) CHLTYPE^(SVRCONN^) MCAUSER^('^*NOBODY'^) SSLCIPH^('TLS_RSA_WITH_3DES_EDE_CBC_SHA'^) TRPTYPE^(TCP^) REPLACE | runmqsc ASH
-	echo DEFINE CHANNEL^('CHLAUTH.USERMAP'^) CHLTYPE^(SVRCONN^) MCAUSER^('^*NOBODY'^)                                            TRPTYPE^(TCP^) REPLACE | runmqsc ASH
-	echo DEFINE CHANNEL^('COMPAT.ADDRMAP'^)  CHLTYPE^(SVRCONN^) MCAUSER^('^*NOBODY'^)                                            TRPTYPE^(TCP^) REPLACE | runmqsc ASH
-	echo DEFINE CHANNEL^('COMPAT.PEERMAP'^)  CHLTYPE^(SVRCONN^) MCAUSER^('^*NOBODY'^) SSLCIPH^('TLS_RSA_WITH_3DES_EDE_CBC_SHA'^) TRPTYPE^(TCP^) REPLACE | runmqsc ASH
-	echo DEFINE CHANNEL^('COMPAT.USERMAP'^)  CHLTYPE^(SVRCONN^) MCAUSER^('^*NOBODY'^)                                            TRPTYPE^(TCP^) REPLACE | runmqsc ASH
+	echo DEFINE CHANNEL^('CHLAUTH.ADDRMAP'^) CHLTYPE^(SVRCONN^) MCAUSER^('^*NOBODY'^)                                            TRPTYPE^(TCP^) REPLACE | runmqsc ASH |  find "AMQ" | find /v "AMQ8014"
+	echo DEFINE CHANNEL^('CHLAUTH.PEERMAP'^) CHLTYPE^(SVRCONN^) MCAUSER^('^*NOBODY'^) SSLCIPH^('TLS_RSA_WITH_3DES_EDE_CBC_SHA'^) TRPTYPE^(TCP^) REPLACE | runmqsc ASH |  find "AMQ" | find /v "AMQ8014"
+	echo DEFINE CHANNEL^('CHLAUTH.USERMAP'^) CHLTYPE^(SVRCONN^) MCAUSER^('^*NOBODY'^)                                            TRPTYPE^(TCP^) REPLACE | runmqsc ASH |  find "AMQ" | find /v "AMQ8014"
+	echo DEFINE CHANNEL^('COMPAT.ADDRMAP'^)  CHLTYPE^(SVRCONN^) MCAUSER^('^*NOBODY'^)                                            TRPTYPE^(TCP^) REPLACE | runmqsc ASH |  find "AMQ" | find /v "AMQ8014"
+	echo DEFINE CHANNEL^('COMPAT.PEERMAP'^)  CHLTYPE^(SVRCONN^) MCAUSER^('^*NOBODY'^) SSLCIPH^('TLS_RSA_WITH_3DES_EDE_CBC_SHA'^) TRPTYPE^(TCP^) REPLACE | runmqsc ASH |  find "AMQ" | find /v "AMQ8014"
+	echo DEFINE CHANNEL^('COMPAT.USERMAP'^)  CHLTYPE^(SVRCONN^) MCAUSER^('^*NOBODY'^)                                            TRPTYPE^(TCP^) REPLACE | runmqsc ASH |  find "AMQ" | find /v "AMQ8014"
 	SET "E=*" & SET "F= "
 	timeout /T !TIMR! >nul
 	GOTO END_CASE
 
 :: Set MCAUSER of the channels to blank 
 :CASE_6
-	echo DEFINE CHANNEL^('CHLAUTH.ADDRMAP'^) CHLTYPE^(SVRCONN^) MCAUSER^(' '^)                                                   TRPTYPE^(TCP^) REPLACE | runmqsc ASH
-	echo DEFINE CHANNEL^('CHLAUTH.PEERMAP'^) CHLTYPE^(SVRCONN^) MCAUSER^(' '^) SSLCIPH^('TLS_RSA_WITH_3DES_EDE_CBC_SHA'^)        TRPTYPE^(TCP^) REPLACE | runmqsc ASH
-	echo DEFINE CHANNEL^('CHLAUTH.USERMAP'^) CHLTYPE^(SVRCONN^) MCAUSER^(' '^)                                                   TRPTYPE^(TCP^) REPLACE | runmqsc ASH
-	echo DEFINE CHANNEL^('COMPAT.ADDRMAP'^)  CHLTYPE^(SVRCONN^) MCAUSER^(' '^)                                                   TRPTYPE^(TCP^) REPLACE | runmqsc ASH
-	echo DEFINE CHANNEL^('COMPAT.PEERMAP'^)  CHLTYPE^(SVRCONN^) MCAUSER^(' '^) SSLCIPH^('TLS_RSA_WITH_3DES_EDE_CBC_SHA'^)        TRPTYPE^(TCP^) REPLACE | runmqsc ASH
-	echo DEFINE CHANNEL^('COMPAT.USERMAP'^)  CHLTYPE^(SVRCONN^) MCAUSER^(' '^)                                                   TRPTYPE^(TCP^) REPLACE | runmqsc ASH
+	echo DEFINE CHANNEL^('CHLAUTH.ADDRMAP'^) CHLTYPE^(SVRCONN^) MCAUSER^(' '^)                                                   TRPTYPE^(TCP^) REPLACE | runmqsc ASH |  find "AMQ" | find /v "AMQ8014"
+	echo DEFINE CHANNEL^('CHLAUTH.PEERMAP'^) CHLTYPE^(SVRCONN^) MCAUSER^(' '^) SSLCIPH^('TLS_RSA_WITH_3DES_EDE_CBC_SHA'^)        TRPTYPE^(TCP^) REPLACE | runmqsc ASH |  find "AMQ" | find /v "AMQ8014"
+	echo DEFINE CHANNEL^('CHLAUTH.USERMAP'^) CHLTYPE^(SVRCONN^) MCAUSER^(' '^)                                                   TRPTYPE^(TCP^) REPLACE | runmqsc ASH |  find "AMQ" | find /v "AMQ8014"
+	echo DEFINE CHANNEL^('COMPAT.ADDRMAP'^)  CHLTYPE^(SVRCONN^) MCAUSER^(' '^)                                                   TRPTYPE^(TCP^) REPLACE | runmqsc ASH |  find "AMQ" | find /v "AMQ8014"
+	echo DEFINE CHANNEL^('COMPAT.PEERMAP'^)  CHLTYPE^(SVRCONN^) MCAUSER^(' '^) SSLCIPH^('TLS_RSA_WITH_3DES_EDE_CBC_SHA'^)        TRPTYPE^(TCP^) REPLACE | runmqsc ASH |  find "AMQ" | find /v "AMQ8014"
+	echo DEFINE CHANNEL^('COMPAT.USERMAP'^)  CHLTYPE^(SVRCONN^) MCAUSER^(' '^)                                                   TRPTYPE^(TCP^) REPLACE | runmqsc ASH |  find "AMQ" | find /v "AMQ8014"
 	SET "E= " & SET "F=*"
 	timeout /T !TIMR! >nul
 	GOTO END_CASE
 
 :: Set ADOPTCTX(YES) and REFRESH SECURITY
 :CASE_7
-	echo ALTER AUTHINFO^('SYSTEM.DEFAULT.AUTHINFO.IDPWOS'^) AUTHTYPE^(IDPWOS^) CHCKCLNT^(REQUIRED^) ADOPTCTX^(YES^) | runmqsc ASH
-	echo REFRESH SECURITY TYPE^(CONNAUTH^) | runmqsc ASH
+	echo ALTER AUTHINFO^('SYSTEM.DEFAULT.AUTHINFO.IDPWOS'^) AUTHTYPE^(IDPWOS^) CHCKCLNT^(REQUIRED^) ADOPTCTX^(YES^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8567"
+	echo REFRESH SECURITY TYPE^(CONNAUTH^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8560"
 	SET "G=*" & SET "H= "
 	timeout /T !TIMR! >nul
 	GOTO END_CASE
 
 :: Set ADOPTCTX(NO) and REFRESH SECURITY
 :CASE_8
-	echo ALTER AUTHINFO^('SYSTEM.DEFAULT.AUTHINFO.IDPWOS'^) AUTHTYPE^(IDPWOS^) CHCKCLNT^(REQUIRED^) ADOPTCTX^(NO^) | runmqsc ASH
-	echo REFRESH SECURITY TYPE^(CONNAUTH^) | runmqsc ASH
+	echo ALTER AUTHINFO^('SYSTEM.DEFAULT.AUTHINFO.IDPWOS'^) AUTHTYPE^(IDPWOS^) CHCKCLNT^(REQUIRED^) ADOPTCTX^(NO^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8567"
+	echo REFRESH SECURITY TYPE^(CONNAUTH^) | runmqsc ASH |  find "AMQ" | find /v "AMQ8560"
 	SET "G= " & SET "H=*"
 	timeout /T !TIMR! >nul
 	GOTO END_CASE
@@ -219,11 +225,11 @@ GOTO MENU
 :: Reset to initial values
 :CASE_R
 :CASE_r
-	echo ALTER QMGR AUTHOERV(ENABLED) CHLEV(ENABLED) SSLEV(ENABLED)                          | runmqsc ASH 1>NUL 2>&1
-	echo SET CHLAUTH('CHLAUTH.*'^) TYPE(BLOCKUSER^) USERLIST('*NOBODY'^) ACTION(REPLACE^)    | runmqsc ASH 1>NUL 2>&1
-	echo SET CHLAUTH('COMPAT.*'^)  TYPE(BLOCKUSER^) USERLIST('*NOBODY'^) ACTION(REPLACE^)    | runmqsc ASH 1>NUL 2>&1
-	echo define LISTENER^(ASH.TCP.1416^) trptype^(TCP^) control^(qmgr^) port^(1416^) REPLACE | runmqsc ASH 1>NUL 2>&1
-	echo start LISTENER^(ASH.TCP.1416^)                                                      | runmqsc ASH 1>NUL 2>&1
+	echo ALTER QMGR AUTHOREV^(ENABLED^) CHLEV^(ENABLED^) SSLEV^(ENABLED^)                    | runmqsc ASH |  find "AMQ" | find /v "AMQ8005"
+	echo SET CHLAUTH('CHLAUTH.*'^) TYPE(BLOCKUSER^) USERLIST('*NOBODY'^) ACTION(REPLACE^)    | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo SET CHLAUTH('COMPAT.*'^)  TYPE(BLOCKUSER^) USERLIST('*NOBODY'^) ACTION(REPLACE^)    | runmqsc ASH |  find "AMQ" | find /v "AMQ8877"
+	echo define LISTENER^(ASH.TCP.1416^) trptype^(TCP^) control^(qmgr^) port^(1416^) REPLACE | runmqsc ASH |  find "AMQ" | find /v "AMQ8626"
+	echo start LISTENER^(ASH.TCP.1416^)                                                      | runmqsc ASH |  find "AMQ" | find /v "AMQ8730"
 	SET TIMR2=!TIMR!
 	SET /a TIMR=0
 	2>NUL CALL :CASE_1
