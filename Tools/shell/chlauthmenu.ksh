@@ -20,7 +20,7 @@
 
 testuser=cspuser
 lport=1416
-certlabl="FOREST"
+certlabl="forest"
 
 QMGR=ASH
 OOPSMSG=" The '*' indicates the current setting."
@@ -120,6 +120,7 @@ function RESET {
 
   echo "DEFINE LISTENER('TCP.$lport') TRPTYPE(TCP) PORT(1416) CONTROL(QMGR) REPLACE" | runmqsc $QMGR 
   echo "START  LISTENER('TCP.$lport')"                                               | runmqsc $QMGR 
+  echo "REFRESH SECURITY TYPE(SSL)"                                                  | runmqsc $QMGR 
   CHL
   MCANOBODY
   ADOPTCTXNO
